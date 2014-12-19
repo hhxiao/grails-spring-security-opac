@@ -1,19 +1,18 @@
+grails.project.class.dir = "target/classes"
+grails.project.test.class.dir = "target/test-classes"
+grails.project.test.reports.dir = "target/test-reports"
+grails.project.target.level = 1.7
 grails.project.work.dir = 'target'
 
-grails.project.repos.default = "grailsCentral"
-
-grails.project.dependency.resolver = "maven"
 grails.project.dependency.resolution = {
-
-    inherits 'global'
-    log 'warn'
-
+    inherits("global") {
+    }
+    log "warn"
     repositories {
         grailsCentral()
-        mavenLocal()
-        mavenCentral()
     }
-
+    dependencies {
+    }
     plugins {
         compile ":spring-security-core:1.2.7.3"
 
