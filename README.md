@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/hhxiao/grails-spring-security-opac.svg)](https://travis-ci.org/hhxiao/grails-spring-security-opac)
+
 grails-spring-security-opac
 ===========================
 
