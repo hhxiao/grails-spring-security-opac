@@ -1,11 +1,9 @@
 package org.grails.plugin.springsecurity.opac
-
 import groovy.util.slurpersupport.GPathResult
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
 import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.core.userdetails.UserDetails
 
 import java.util.concurrent.ConcurrentHashMap
 /**
@@ -45,28 +43,32 @@ class UserRegistrar {
         fieldMappings = SpringSecurityUtils.securityConfig.opac.user.fieldMappings
     }
 
-    boolean isRegistered(UserDetails userDetails) {
-        null != (domainClass."findBy${usernamePropertyName.capitalize()}"(userDetails.username))
+    boolean isRegistered(String username) {
+        null != (domainClass."findBy${usernamePropertyName.capitalize()}"(username))
     }
 
-    def registerUser(OpacUserDetails userDetails) {
+    OpacUserDetails registerUser(String username, String password, Collection<GrantedAuthority> authorities, GPathResult userData) {
         try {
             if (persistenceInterceptor) {
                 logger.debug("opening persistence context for UserRegistrar")
                 persistenceInterceptor.init()
-            }
-            else {
+            } else {
                 logger.debug("no persistence interceptor for UserRegistrar")
             }
 
             def domain = domainClass.newInstance()
-            domain[(usernamePropertyName)] = userDetails.username
-            domain[(passwordPropertyName)] = springSecurityService.encodePassword(userDetails.password)
+            domain[(usernamePropertyName)] = username
+            domain[(passwordPropertyName)] = springSecurityService.encodePassword(password)
             domain[(enabledPropertyName)] = true
-            populate(domain, userDetails)
+
+            Map<String, Object> data = toMap(userData)
+            data.put(USERNAME, username)
+            data.put(PASSWORD, password)
+
+            domain.properties = fieldMappings.collectEntries { k, v -> [k, data.get(v)] }
             domain.save(flush: true)
 
-            for(GrantedAuthority authority : userDetails.authorities) {
+            for(GrantedAuthority authority : authorities) {
                 rolesMap
                 def role = rolesMap.get(authority.authority)
                 if(!role) {
@@ -76,9 +78,8 @@ class UserRegistrar {
                 }
                 authorityJoinClass.create(domain, role, true)
             }
-            logger.info("${userDetails.username} registered successfully")
-            userDetails.id = domain.id
-            return domain
+            logger.info("${username} registered successfully")
+            return new OpacUserDetails(username, password, authorities, domain.id)
         } finally {
             if (persistenceInterceptor) {
                 logger.debug("destroying persistence context for UserRegistrar")
@@ -96,15 +97,5 @@ class UserRegistrar {
             }
         }
         return bindings
-    }
-
-    private void populate(def domain, OpacUserDetails userDetails) {
-        Map<String, Object> bindings = toMap(userDetails.userData)
-        bindings.put(USERNAME, userDetails.username)
-        bindings.put(PASSWORD, userDetails.password)
-
-        fieldMappings.each { key, value ->
-            domain[(key)] = bindings.get(value)
-        }
     }
 }

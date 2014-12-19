@@ -1,6 +1,5 @@
 package org.grails.plugin.springsecurity.opac
 
-import groovy.util.slurpersupport.GPathResult
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 /**
@@ -10,8 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails
  * Time: 18:05:04
  * To change this template use File | Settings | File Templates.
  */
-public class OpacUserDetails implements UserDetails {
-    private Collection<GrantedAuthority> extraAuthorities = Collections.emptyList()
+class OpacUserDetails implements UserDetails {
+    private Collection<GrantedAuthority> authorities = Collections.emptyList()
 
     private String username
     private String password
@@ -20,28 +19,37 @@ public class OpacUserDetails implements UserDetails {
     boolean accountNonLocked = true
     boolean accountNonExpired = true
 
-    Object id
-    GPathResult userData
+    private Object id
 
-    public OpacUserDetails(String username, String password, Collection<GrantedAuthority> extraAuthorities) {
+    OpacUserDetails(String username, String password, Collection<GrantedAuthority> authorities) {
+        this(username, password, authorities, null)
+    }
+
+    OpacUserDetails(String username, String password, Collection<GrantedAuthority> authorities, Object id) {
         this.username = username
         this.password = password
-        this.extraAuthorities = extraAuthorities
+        this.authorities = authorities
         this.enabled = true
+        this.id = id
     }
 
     @Override
-    public Collection<GrantedAuthority> getAuthorities() {
-        return extraAuthorities;
+    Collection<GrantedAuthority> getAuthorities() {
+        return authorities;
     }
 
     @Override
-    public String getPassword() {
+    String getPassword() {
         return password; 
     }
 
     @Override
-    public String getUsername() {
+    String getUsername() {
         return username
+    }
+
+    @Override
+    String toString() {
+        username
     }
 }

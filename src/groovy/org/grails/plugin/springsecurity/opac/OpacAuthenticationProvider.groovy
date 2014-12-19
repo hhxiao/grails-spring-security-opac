@@ -1,5 +1,6 @@
 package org.grails.plugin.springsecurity.opac
 
+import groovy.util.slurpersupport.GPathResult
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
@@ -7,7 +8,6 @@ import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.AuthenticationServiceException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider
-import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -30,30 +30,22 @@ class OpacAuthenticationProvider extends AbstractUserDetailsAuthenticationProvid
 
     @Override
     protected void additionalAuthenticationChecks(UserDetails userDetails, UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) throws AuthenticationException {
-        if(userDetails) {
-            try {
-                OpacUserDetails opacUserDetails = (OpacUserDetails)userDetails
-                opacUserDetails.userData = opacAuthenticator.authenticate(opacUserDetails.username, opacUserDetails.password)
-            } catch (OpacException e) {
-                logger.warn("Failed to login ${userDetails.username}", e)
-                throw new AuthenticationServiceException(e.getMessage(), e);
-            }
-        }
     }
 
     @Override
     protected UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
         String password = (String)authentication.getCredentials()
-        Collection<GrantedAuthority> extraAuthorities = authoritiesPopulator.getGrantedAuthorities(username)
-        OpacUserDetails user = new OpacUserDetails(username, password, extraAuthorities)
-        return user
-    }
+        try {
+            GPathResult userData = opacAuthenticator.authenticate(username, password)
+            Collection<GrantedAuthority> authorities = authoritiesPopulator.getGrantedAuthorities(username)
 
-    @Override
-    protected Authentication createSuccessAuthentication(Object principal, Authentication authentication, UserDetails user) {
-        if(autoCreate && !userRegistrar.isRegistered(user)) {
-            userRegistrar.registerUser((OpacUserDetails)user)
+            if(autoCreate && !userRegistrar.isRegistered(username)) {
+                return userRegistrar.registerUser(username, password, authorities, userData)
+            }
+            return new OpacUserDetails(username, password, authorities, userData)
+        } catch (OpacException e) {
+            logger.warn("Failed to login ${username}", e)
+            throw new AuthenticationServiceException(e.getMessage(), e);
         }
-        return super.createSuccessAuthentication(principal, authentication, user)
     }
 }
