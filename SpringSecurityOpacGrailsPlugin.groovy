@@ -19,7 +19,7 @@ class SpringSecurityOpacGrailsPlugin {
 	def author = "Hai-Hua Xiao"
 	def authorEmail = "hhxiao@gmail.com"
 	def title = "Opac authentication support for the Spring Security plugin"
-	def description = "Opac  authentication support for the Spring Security plugin"
+	def description = "Opac authentication support for the Spring Security plugin"
 
 	// URL to the plugin's documentation
 	def documentation = "http://grails.org/plugin/spring-security-opac"
