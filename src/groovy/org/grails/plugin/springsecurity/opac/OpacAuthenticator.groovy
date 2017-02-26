@@ -12,7 +12,7 @@ class OpacAuthenticator {
     String library
 
     GPathResult authenticate(username, password) {
-        String url = "${url}/X?op=bor-auth_valid&id=${username}&verification=${password}&library=${library}"
+        String url = "${url}/X?op=bor-auth&bor-id=${username}&verification=${password}&library=${library}"
         String result = new URL(url).getText('UTF-8')
         def xmlSlurper = new XmlSlurper()
         def xml = xmlSlurper.parseText(result)
